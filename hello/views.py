@@ -5,7 +5,8 @@ from .models import Greeting
 
 # Create your views here.
 def index(request):
-    return HttpResponse('Hello from Pythona adsf adsf !')
+	x=3;
+    return HttpResponse(x)
 
 
 def db(request):
