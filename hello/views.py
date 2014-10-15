@@ -3,57 +3,27 @@ from django.http import HttpResponse
 
 from .models import Greeting
 
+import tweepy
+import csv
+import time
+import re
+import pandas as pd
+import collections
+
 import requests
 
 # Create your views here.
 def index(request):
-	handle = 'flavordan'
+	screen_name = request.GET["handle"]
+	handle=screen_name
 
 	# this should all work just fine with Twitter
 	auth = tweepy.OAuthHandler('aOtAWCqvw99r9mDkP5TtpQ','1Qs97JNZpzx0XoInBH1ikmFHseZo511Ts4PxrwJss')
 	auth.set_access_token('588385097-TZXoE2FP55l2ZLdxbrN8iC784YoNBelrgLaJRTJE','wvj8OCfEzt27IEVo36nBEMWL37K8HBl8s5zDz9yjnVc')
 	api = tweepy.API(auth)
-	data = api.get_user(handle)
+	data = api.get_user(screen_name)
 
-	outtweets = get_outtweets(handle)
-	interesting_df = get_interesting_df(handle)
-
-	activity = total-originaltweets
-	PtweetsRTd = percentage(tweetsRTd, originaltweets)
-	Poriginaltweets = percentage(originaltweets, total)
-	PRT = percentage(RT, activity)
-	Pconvo = percentage(convo, activity)
-	Pconvostarter = percentage(convostarter, activity)
-	users = df['user'].value_counts()[:10]
-	fav = df.sort(['Times_Favorited'], ascending=[0])[:10][['Tweet','Times_Favorited']]
-	totalfavorited = df['Times_Favorited'].sum()
-	num_RT = interesting_df["Times_RTd"].sum()
-	
-	print ' '      
-	print '@'+ handle +" " + str(total) + " Statistics:"
-	print 'Followers: ' + str(data.followers_count)
-	print 'Following: ' + str(data.friends_count)
-	print 'Member of ' + str(data.listed_count) + ' lists'
-	print ' '
-	print 'Activity: '
-	print Poriginaltweets +" (" + str(originaltweets) + " tweets)  of @" +handle+ " activity are original tweets (no RT or replies)"
-	print PtweetsRTd +" (" + str(tweetsRTd)+ " tweets) of @" +handle+ " original tweets were retweeted " + str(num_RT) + " times"
-	print "@" +handle+ " received " + str(totalfavorited)+  " favorites"
-	print ' '
-	print 'In-depth:'
-	print '@'+ handle + " RTd " + str(RT) + " times"
-	print 'Favorited ' + str(data.favourites_count) + " tweets"
-	print "Replied to " + str(convo) + " tweets"
-	print str(convostarter) + " tweets were directed at a user"
-	print ''
-	print 'Top 10 user interactions and number of replies to that user:'
-	print users
-	print ' '
-	print 'Top Favorited tweets'
-	print fav
-
-
-def get_outtweets(screen_name):
+	################################################################################
 
 	#initialize a list to hold all the tweepy Tweets
 	alltweets = []	
@@ -90,14 +60,13 @@ def get_outtweets(screen_name):
 		writer.writerows(outtweets)
 	pass
 
-	return outtweets
- 
-    
-def get_interesting_df(screen_name)
+	################################################################################
+
+
 	columns = collections.defaultdict(list)
 	text=[]
 	total=0
-	with open('/tmp/%s.csv' % handle, 'rU') as f:
+	with open('/tmp/%s.csv' % screen_name, 'rU') as f:
 	    reader = csv.reader(f)
 	    reader.next()
 	    for row in reader:
@@ -142,7 +111,7 @@ def get_interesting_df(screen_name)
 	originaltweets=total-direct-RT
 	convostarter = direct-convo
 
-	df = pd.read_csv('%s.csv' % handle).reset_index()
+	df = pd.read_csv('/tmp/%s.csv' % screen_name).reset_index()
 
 	interesting_df = df[(df.conversation_id.isnull()) &
 	                    (df.Times_RTd > 0) &
@@ -152,9 +121,49 @@ def get_interesting_df(screen_name)
 	head=["Date", "Times_Favorited", "Tweet"]
 
 	tweetsRTd = len(interesting_df)
-	interesting_df.to_csv('%s_RTS.csv' % handle, cols=headers)
+	interesting_df.to_csv('%s_RTS.csv' % screen_name, cols=headers)
 
-	return interesting_df
+	################################################################################
+
+	activity = total-originaltweets
+	PtweetsRTd = percentage(tweetsRTd, originaltweets)
+	Poriginaltweets = percentage(originaltweets, total)
+	PRT = percentage(RT, activity)
+	Pconvo = percentage(convo, activity)
+	Pconvostarter = percentage(convostarter, activity)
+	users = df['user'].value_counts()[:10]
+	fav = df.sort(['Times_Favorited'], ascending=[0])[:10][['Tweet','Times_Favorited']]
+	totalfavorited = df['Times_Favorited'].sum()
+	num_RT = interesting_df["Times_RTd"].sum()
+	
+	html_output = '<html><head><title>Twitter Analyzer</title</head><body>'
+
+	html_output = ''
+	html_output+= '@'+ handle +" " + str(total) + " Statistics:"
+	html_output+= 'Followers: ' + str(data.followers_count)
+	html_output+= 'Following: ' + str(data.friends_count)
+	html_output+= 'Member of ' + str(data.listed_count) + ' lists'
+	html_output+= ' '
+	html_output+= 'Activity: '
+	html_output+= Poriginaltweets +" (" + str(originaltweets) + " tweets)  of @" +handle+ " activity are original tweets (no RT or replies)"
+	html_output+= PtweetsRTd +" (" + str(tweetsRTd)+ " tweets) of @" +handle+ " original tweets were retweeted " + str(num_RT) + " times"
+	html_output+= "@" +handle+ " received " + str(totalfavorited)+  " favorites"
+	html_output+= ' '
+	html_output+= 'In-depth:'
+	html_output+= '@'+ handle + " RTd " + str(RT) + " times"
+	html_output+= 'Favorited ' + str(data.favourites_count) + " tweets"
+	html_output+= "Replied to " + str(convo) + " tweets"
+	html_output+= str(convostarter) + " tweets were directed at a user"
+	html_output+= ''
+	html_output+= 'Top 10 user interactions and number of replies to that user:'
+	#html_output+= '<br />'.join(users)
+	html_output+= ' '
+	html_output+= 'Top Favorited tweets'
+	#html_output+= '<br />'.join(fav)
+
+	html_output += '</body></html>'
+
+	return HttpResponse(html_output)
 
 
 def percentage(part, whole):
@@ -165,7 +174,11 @@ def percentage(part, whole):
         rnd = '%.0f' % round(ans, 1)
         return str(rnd) + "%"
 
-	# print str(stared) + " of your tweets were"
+
+
+
+
+
 
 
 def db(request):
