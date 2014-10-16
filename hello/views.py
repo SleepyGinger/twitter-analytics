@@ -12,10 +12,16 @@ import collections
 
 import requests
 
-# Create your views here.
 def index(request):
+	
+	html_output= '<html><head><title>Twitter Analyzer</title></head><body>'
+	html_output+='<form action="analyze/" method="request.GET"> Twitter Handle @<input type="text" name="handle"><br><input type="submit" value="Submit"></form>'
+	html_output += '</body></html>'
+	return HttpResponse(html_output)
+
+
+def analyze(request):
 	screen_name = request.GET["handle"]
-	handle=screen_name
 
 	# this should all work just fine with Twitter
 	auth = tweepy.OAuthHandler('aOtAWCqvw99r9mDkP5TtpQ','1Qs97JNZpzx0XoInBH1ikmFHseZo511Ts4PxrwJss')
@@ -136,35 +142,35 @@ def index(request):
 	totalfavorited = df['Times_Favorited'].sum()
 	num_RT = interesting_df["Times_RTd"].sum()
 	
-	html_output = '<html><head><title>Twitter Analyzer</title</head><body>'
-
-	html_output = ''
-	html_output+= '@'+ handle +" " + str(total) + " Statistics:"
-	html_output+= 'Followers: ' + str(data.followers_count)
-	html_output+= 'Following: ' + str(data.friends_count)
-	html_output+= 'Member of ' + str(data.listed_count) + ' lists'
-	html_output+= ' '
-	html_output+= 'Activity: '
-	html_output+= Poriginaltweets +" (" + str(originaltweets) + " tweets)  of @" +handle+ " activity are original tweets (no RT or replies)"
-	html_output+= PtweetsRTd +" (" + str(tweetsRTd)+ " tweets) of @" +handle+ " original tweets were retweeted " + str(num_RT) + " times"
-	html_output+= "@" +handle+ " received " + str(totalfavorited)+  " favorites"
-	html_output+= ' '
-	html_output+= 'In-depth:'
-	html_output+= '@'+ handle + " RTd " + str(RT) + " times"
-	html_output+= 'Favorited ' + str(data.favourites_count) + " tweets"
-	html_output+= "Replied to " + str(convo) + " tweets"
-	html_output+= str(convostarter) + " tweets were directed at a user"
+	html_output= '<html><head><title>Twitter Analyzer</title></head><center><body>'
 	html_output+= ''
-	html_output+= 'Top 10 user interactions and number of replies to that user:'
+	html_output+= '<h1>'+'@'+ screen_name+ ' Statistics </h1>'
+	html_output+= '<br>'
+	html_output+= '<br> Followers: ' + str(data.followers_count)
+	html_output+= '<br>Following: ' + str(data.friends_count)
+	html_output+= '<br> Member of ' + str(data.listed_count) + ' lists'
+	html_output+= '<br><br>'
+	html_output+= '<h2> Activity:</h2>'
+	html_output+= '<br>' + str(total) + " total tweets" 
+	html_output+= '<br>'+Poriginaltweets +" (" + str(originaltweets) + " tweets)  of @" +screen_name+ "'s activity are original tweets (no RT or replies)"
+	html_output+= '<br>'+PtweetsRTd +" (" + str(tweetsRTd)+ " tweets) of @" +screen_name+ "'s tweets were retweeted " + str(num_RT) + " times"
+	html_output+= '<br>'+"@" +screen_name+ " received " + str(totalfavorited)+  " favorites"
+	html_output+= '<br><br>'
+	html_output+= '<h2> In-depth:</h2>'
+	html_output+= '<br>@'+ screen_name + " RT'd " + str(RT) + " times"
+	html_output+= '<br>Favorited ' + str(data.favourites_count) + " tweets"
+	html_output+= '<br>Replied to ' + str(convo) + " tweets"
+	html_output+= '<br>'+str(convostarter) + " tweets were directed at a user"
+	html_output+= '<p>&nbsp;</p>'
+	#html_output+= 'Top 10 user interactions and number of replies to that user:'
 	#html_output+= '<br />'.join(users)
-	html_output+= ' '
-	html_output+= 'Top Favorited tweets'
-	#html_output+= '<br />'.join(fav)
+	#html_output+= '<br> '
+	#html_output+= 'Top Favorited tweets'
+	#html_output+= fav
 
-	html_output += '</body></html>'
+	html_output += '</center></body></html>'
 
 	return HttpResponse(html_output)
-
 
 def percentage(part, whole):
     if whole==0:
@@ -176,16 +182,11 @@ def percentage(part, whole):
 
 
 
+#def db(request):
 
+ #   greeting = Greeting()
+  #  greeting.save()
 
+ 	#greetings = Greeting.objects.all()
 
-
-
-def db(request):
-
-    greeting = Greeting()
-    greeting.save()
-
-    greetings = Greeting.objects.all()
-
-    return render(request, 'db.html', {'greetings': greetings})
+    r#eturn render(request, 'db.html', {'greetings': greetings})
