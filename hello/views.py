@@ -15,7 +15,10 @@ import requests
 def index(request):
 	
 	html_output= '<html><head><title>Twitter Analyzer</title></head><body>'
-	html_output+='<form action="analyze/" method="request.GET"> Twitter Handle @<input type="text" name="handle"><br><input type="submit" value="Submit"></form>'
+	html_output+= '<p>&nbsp;</p>'
+	html_output+= '<p>&nbsp;</p>'
+	html_output+= '<p>&nbsp;</p>'
+	html_output+='<center><form action="analyze/" method="request.GET">A Twitter handle please <input type="text"  size="10" name="handle">&nbsp;&nbsp;<input type="submit" value="Analyze"></form></center>'
 	html_output += '</body></html>'
 	return HttpResponse(html_output)
 
@@ -28,6 +31,8 @@ def analyze(request):
 	auth.set_access_token('588385097-TZXoE2FP55l2ZLdxbrN8iC784YoNBelrgLaJRTJE','wvj8OCfEzt27IEVo36nBEMWL37K8HBl8s5zDz9yjnVc')
 	api = tweepy.API(auth)
 	data = api.get_user(screen_name)
+	profile_img=data._json['profile_image_url_https']
+	name=data._json['name']
 
 	################################################################################
 
@@ -67,7 +72,10 @@ def analyze(request):
 	pass
 
 	################################################################################
-
+	dd = pd.DataFrame(outtweets)
+	dd.columns = ['RT_count', 'reply_id', 'Tweet', 'at_message_id', 'date', 'at_message_user', 'favorited_count' ]
+	btop_messaged_user=str(dd['at_message_user'].value_counts()[:5])
+	top_messaged_user=btop_messaged_user.replace("\n", "'<br>'").replace("dtype: int64","")
 
 	columns = collections.defaultdict(list)
 	text=[]
@@ -80,12 +88,15 @@ def analyze(request):
 	        total +=1
 	        for (i,v) in enumerate(row):
 	            columns[i].append(v)
-	            
-	ttext = columns[2]
+
+	tRT = columns[0]	            
 	tconvo = columns[1]
-	tRT = columns[0]
+	ttext = columns[2]
 	tdirect = columns[3]
-	tfollowers = columns[5]
+	tdate= columns[4]
+	tuser = columns[5]
+
+	tuser=[]
 
 	#adds +1 to oringinal if finds empty space in tconvo
 	original=0
@@ -134,37 +145,34 @@ def analyze(request):
 	activity = total-originaltweets
 	PtweetsRTd = percentage(tweetsRTd, originaltweets)
 	Poriginaltweets = percentage(originaltweets, total)
-	PRT = percentage(RT, activity)
-	Pconvo = percentage(convo, activity)
-	Pconvostarter = percentage(convostarter, activity)
+	PRT = percentage(RT, total)
+	Pconvo = percentage(convo, total)
+	Pconvostarter = percentage(convostarter, total)
 	users = df['user'].value_counts()[:10]
 	fav = df.sort(['Times_Favorited'], ascending=[0])[:10][['Tweet','Times_Favorited']]
 	totalfavorited = df['Times_Favorited'].sum()
 	num_RT = interesting_df["Times_RTd"].sum()
 	
-	html_output= '<html><head><title>Twitter Analyzer</title></head><center><body>'
-	html_output+= ''
-	html_output+= '<h1>'+'@'+ screen_name+ ' Statistics </h1>'
+	html_output= '<html><head><title>Twitter Analyzer</title></head><body>'
+	html_output+= '<center><font size="11"><img src='+profile_img+' alt=Profile_Pic>'
+	html_output+= ' '+ name+ "'s Twitter Overview </font>"
 	html_output+= '<br>'
 	html_output+= '<br> Followers: ' + str(data.followers_count)
-	html_output+= '<br>Following: ' + str(data.friends_count)
-	html_output+= '<br> Member of ' + str(data.listed_count) + ' lists'
+	html_output+= '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Following: ' + str(data.friends_count)
+	html_output+= '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Member of ' + str(data.listed_count) + ' lists'  + "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Total tweets: " + str(total)
 	html_output+= '<br><br>'
-	html_output+= '<h2> Activity:</h2>'
-	html_output+= '<br>' + str(total) + " total tweets" 
-	html_output+= '<br>'+Poriginaltweets +" (" + str(originaltweets) + " tweets)  of @" +screen_name+ "'s activity are original tweets (no RT or replies)"
-	html_output+= '<br>'+PtweetsRTd +" (" + str(tweetsRTd)+ " tweets) of @" +screen_name+ "'s tweets were retweeted " + str(num_RT) + " times"
-	html_output+= '<br>'+"@" +screen_name+ " received " + str(totalfavorited)+  " favorites"
+	html_output+= '<font size="8"> Activity</font>' 
+	html_output+= '<br>' +Poriginaltweets +" (" + str(originaltweets) + " tweets)  of @" +screen_name+ "'s activity are original tweets (no RT or replies)"
+	html_output+= '<br>' +PRT +" (" + str(RT) + " tweets)  of @" +screen_name+ "'s tweets were RTs"
+	html_output+= '<br>' +Pconvo +" (" + str(convo) + " tweets)  of @" +screen_name+ "'s tweets were replies to a user"
+	html_output+= '<br>' +Pconvostarter +" (" + str(convostarter) + " tweets)  of @" +screen_name+ "'s tweets were directed at a user"
 	html_output+= '<br><br>'
-	html_output+= '<h2> In-depth:</h2>'
-	html_output+= '<br>@'+ screen_name + " RT'd " + str(RT) + " times"
+	html_output+= '<font size="8"> In-depth</font>'
 	html_output+= '<br>Favorited ' + str(data.favourites_count) + " tweets"
-	html_output+= '<br>Replied to ' + str(convo) + " tweets"
-	html_output+= '<br>'+str(convostarter) + " tweets were directed at a user"
-	html_output+= '<p>&nbsp;</p>'
-	#html_output+= 'Top 10 user interactions and number of replies to that user:'
-	#html_output+= '<br />'.join(users)
-	#html_output+= '<br> '
+	html_output+= '<br>' + PtweetsRTd +" (" + str(tweetsRTd)+ " tweets) of @" +screen_name+ "'s tweets were retweeted " + str(num_RT) + " times"
+	html_output+= '<br>' + "@" +screen_name+ " received " + str(totalfavorited)+  " favorites"
+	html_output+= '<br><br>Top 5 direct messaged users with frequencies<br>'
+	html_output+= top_messaged_user+'</center>'
 	#html_output+= 'Top Favorited tweets'
 	#html_output+= fav
 
