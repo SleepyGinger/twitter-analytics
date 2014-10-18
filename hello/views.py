@@ -24,7 +24,8 @@ def index(request):
 
 
 def analyze(request):
-	screen_name = request.GET["handle"]
+	screen_name = request.GET["handle"].replace('@','')
+
 
 	# this should all work just fine with Twitter
 	auth = tweepy.OAuthHandler('aOtAWCqvw99r9mDkP5TtpQ','1Qs97JNZpzx0XoInBH1ikmFHseZo511Ts4PxrwJss')
@@ -33,6 +34,12 @@ def analyze(request):
 	data = api.get_user(screen_name)
 	profile_img=data._json['profile_image_url_https']
 	name=data._json['name']
+	background=data._json["profile_banner_url"]
+	description=data._json["description"].encode("utf-8")
+	description= re.sub('\W', ' ', description)
+	#displayed_url=data._json['entities']['url']['urls'][0]['display_url']
+	created=str(data._json['created_at'])
+	created=created[4:10]+', '+created[25:30]
 
 	################################################################################
 
@@ -75,7 +82,7 @@ def analyze(request):
 	dd = pd.DataFrame(outtweets)
 	dd.columns = ['RT_count', 'reply_id', 'Tweet', 'at_message_id', 'date', 'at_message_user', 'favorited_count' ]
 	btop_messaged_user=str(dd['at_message_user'].value_counts()[:5])
-	top_messaged_user=btop_messaged_user.replace("\n", "'<br>'").replace("dtype: int64","")
+	top_messaged_user=btop_messaged_user.replace("\n", "'<br>'").replace("dtype: int64","").replace("'","")
 
 	columns = collections.defaultdict(list)
 	text=[]
@@ -152,14 +159,17 @@ def analyze(request):
 	fav = df.sort(['Times_Favorited'], ascending=[0])[:10][['Tweet','Times_Favorited']]
 	totalfavorited = df['Times_Favorited'].sum()
 	num_RT = interesting_df["Times_RTd"].sum()
+
 	
-	html_output= '<html><head><title>Twitter Analyzer</title></head><body>'
+	html_output=  '<html><head><title>Twitter Analyzer</title></head><body style="background-image: url('+background+'); background-position: right top; background-repeat: no-repeat; background-attachment: fixed; background-position: 95% 2%;  background-size: 250px 90px; ">'
 	html_output+= '<center><font size="11"><img src='+profile_img+' alt=Profile_Pic>'
 	html_output+= ' '+ name+ "'s Twitter Overview </font>"
 	html_output+= '<br>'
 	html_output+= '<br> Followers: ' + str(data.followers_count)
 	html_output+= '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Following: ' + str(data.friends_count)
 	html_output+= '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Member of ' + str(data.listed_count) + ' lists'  + "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Total tweets: " + str(total)
+	html_output+= '<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tweeting since ' + str(created) + '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;URL:'
+	html_output+= '<br>'+ str(description)
 	html_output+= '<br><br>'
 	html_output+= '<font size="8"> Activity</font>' 
 	html_output+= '<br>' +Poriginaltweets +" (" + str(originaltweets) + " tweets)  of @" +screen_name+ "'s activity are original tweets (no RT or replies)"
