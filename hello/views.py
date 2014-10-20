@@ -101,7 +101,7 @@ def analyze(request):
 	pd.Series(date_by_years).value_counts().plot(marker='o', linestyle='-')
 	plt.xticks(rotation=30)
 	plt.show()
-	plt.savefig('y.png')
+	matplotlib.pyplot.savefig('/tmp/sy.png')
 	btop_messaged_user=str(dd['at_message_user'].value_counts()[:5])
 	top_messaged_user=btop_messaged_user.replace("\n", "'<br>'").replace("dtype: int64","").replace("'","")
 
@@ -204,7 +204,7 @@ def analyze(request):
 	html_output+= '<br>' + "@" +screen_name+ " received " + str(totalfavorited)+  " favorites"
 	html_output+= '<br><br>Top 5 direct messaged users with frequencies<br>'
 	html_output+= top_messaged_user
-	html_output+= "<br> <img src='y.png'>"
+	html_output+= "<br> <img src='/tmp/sy.png'>"
 	html_output+= '</center>'
 	#html_output+= 'Top Favorited tweets'
 	#html_output+= fav
