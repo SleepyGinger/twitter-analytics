@@ -10,7 +10,7 @@ import re
 import pandas as pd
 import collections
 import numpy as np
-import matplotlib.pylab as plt
+import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 import requests
@@ -30,14 +30,14 @@ def day_graph(source):
     pd.Series(date_by_years).value_counts().plot(marker='o', linestyle='-')
     plt.xticks(rotation=30)
     plt.show()
-    #return(matplotlib.pyplot.savefig('d.png'))
+    return(matplotlib.pyplot.savefig('d.png'))
 
 def year_graph(source):   
     date_by_years=pd.to_datetime(source, coerce=True).values.astype('datetime64[Y]')
     pd.Series(date_by_years).value_counts().plot(marker='o', linestyle='-')
     plt.xticks(rotation=30)
     plt.show()
-    #return(matplotlib.pyplot.savefig('y.png'))
+    return(matplotlib.pyplot.savefig('y.png'))
 
 def analyze(request):
 	screen_name = request.GET["handle"].replace('@','')
@@ -97,7 +97,11 @@ def analyze(request):
 	################################################################################
 	dd = pd.DataFrame(outtweets)
 	dd.columns = ['RT_count', 'reply_id', 'Tweet', 'at_message_id', 'date', 'at_message_user', 'favorited_count' ]
-	year_graph(dd['date'])
+	date_by_years=pd.to_datetime(dd['date'], coerce=True).values.astype('datetime64[Y]')
+	pd.Series(date_by_years).value_counts().plot(marker='o', linestyle='-')
+	plt.xticks(rotation=30)
+	plt.show()
+	plt.savefig('y.png')
 	btop_messaged_user=str(dd['at_message_user'].value_counts()[:5])
 	top_messaged_user=btop_messaged_user.replace("\n", "'<br>'").replace("dtype: int64","").replace("'","")
 
@@ -200,8 +204,8 @@ def analyze(request):
 	html_output+= '<br>' + "@" +screen_name+ " received " + str(totalfavorited)+  " favorites"
 	html_output+= '<br><br>Top 5 direct messaged users with frequencies<br>'
 	html_output+= top_messaged_user
-	html_output+= '<br> <img src=/tmp/y.png>'
-	html_output+='</center>'
+	html_output+= "<br> <img src='y.png'>"
+	html_output+= '</center>'
 	#html_output+= 'Top Favorited tweets'
 	#html_output+= fav
 
