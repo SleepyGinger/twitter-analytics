@@ -9,8 +9,7 @@ wsgiref==0.1.2
 requests==2.3.0
 tweepy==2.3.0 
 pandas==0.13.1
-matplotlib
-
+matplotlib==1.1.0
 #time
 #csv
 #re

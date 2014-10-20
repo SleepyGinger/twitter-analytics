@@ -10,10 +10,8 @@ import re
 import pandas as pd
 import collections
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib.pylab as plt
 import matplotlib.dates as mdates
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
 
 import requests
 
