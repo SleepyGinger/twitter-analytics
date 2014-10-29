@@ -149,7 +149,7 @@ def analyze(request):
 	html_output+= '<br>' + str(percentage(original_RT_count,status_count)) +" (" + str(original_RT_count)+ " tweets) of @" +screen_name+ "'s original tweets were retweeted " + str(origianl_RT_sum) + " times"
 	html_output+= '<br>' + str(percentage(favorite_count,status_count)) +" (" + str(favorite_count)+ " tweets) of @" +screen_name+ "'s original tweets were favorited " + str(favorite_sum) + " times"
 	html_output+= '<br><br>Top 5 direct messaged users with frequencies<br>'
-	html_output+= "<br> <img src="'"graphs/temp.png"'">"
+	html_output+= "<br> <img src="'"/tmp/temp.png"'">"
 	html_output+= '</center>'
 
 
