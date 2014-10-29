@@ -124,7 +124,7 @@ def analyze(request):
 	plt.xlabel('Year')
 	ax=plt.gca()
 	ax.get_xaxis().get_major_formatter().set_useOffset(False)
-	plt.savefig('tmp/temp.png')
+	plt.savefig('/tmp/temp.png')
 	plt.show()
 	
 	
