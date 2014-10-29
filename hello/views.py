@@ -112,6 +112,20 @@ def analyze(request):
 	at_df=all_at_user_df[all_at_user_df['Reply_id']==False]
 	at_count=len(all_at_user_df[all_at_user_df['Reply_id']==False])
 
+	y=pd.DataFrame(df['year'].value_counts())
+	y.reset_index(level=0, inplace=True)
+	y.columns=['year','freq']
+	py=y.sort('year')
+	plt.plot(py['year'], py['freq'])
+	#plt.axis([min(py['year']), max(py['year']), 0, max(py['freq'])+10])
+	plt.axis([2008, 2014, 0, max(py['freq'])+10])
+	plt.ylabel('Frequency')
+	plt.xlabel('Year')
+	ax=plt.gca()
+	ax.get_xaxis().get_major_formatter().set_useOffset(False)
+	plt.savefig('tmp/temp.png')
+	plt.show()
+	
 	
 	html_output=  '<html><head><title>Twitter Analyzer</title></head><body style="background-image: url('+str(data.profile_banner_url)+'); background-position: right top; background-repeat: no-repeat; background-attachment: fixed; background-position: 3% 2%;  background-size: 250px 90px; ">'
 	html_output+= '<center><font size="11"><img src='+str(data.profile_image_url_https)+' alt=Profile_Pic>'
@@ -134,7 +148,7 @@ def analyze(request):
 	html_output+= '<br>' + str(percentage(original_RT_count,status_count)) +" (" + str(original_RT_count)+ " tweets) of @" +screen_name+ "'s original tweets were retweeted " + str(origianl_RT_sum) + " times"
 	html_output+= '<br>' + str(percentage(favorite_count,status_count)) +" (" + str(favorite_count)+ " tweets) of @" +screen_name+ "'s original tweets were favorited " + str(favorite_sum) + " times"
 	html_output+= '<br><br>Top 5 direct messaged users with frequencies<br>'
-	html_output+= "<br> <img src='test.png'>"
+	html_output+= "<br> <img src="'"graphs/temp.png"'">"
 	html_output+= '</center>'
 
 
