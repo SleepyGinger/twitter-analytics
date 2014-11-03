@@ -44,15 +44,7 @@ def analyze(request):
 	api = tweepy.API(auth)
 	
 	data = api.get_user(screen_name)
-	#profile_img=data._json['profile_image_url_https']
-	created=str(data._json['created_at'])
-	created=created[4:10]+','+created[25:30]
-	name=data._json['name']
-	#background=data._json["profile_banner_url"]
-	description=data._json["description"].encode("utf-8")
-	description= re.sub('\W', ' ', description)
-	#displayed_url=data._json['entities']['url']['urls'][0]['display_url']
-	
+
 	
 	#initialize a list to hold all the tweepy Tweets
 	alltweets = []	
@@ -68,7 +60,7 @@ def analyze(request):
 	
 	#keep grabbing tweets until there are no tweets left to grab
 	while len(new_tweets) > 0:
-		#print "Getting tweets before tweet id: %s" % (oldest)
+		print "Getting tweets before tweet id: %s" % (oldest)
 		
 		#all subsiquent requests use the max_id param to prevent duplicates
 		new_tweets = api.user_timeline(screen_name = screen_name ,count=200,max_id=oldest)
@@ -79,9 +71,9 @@ def analyze(request):
 		#update the id of the oldest tweet less one
 		oldest = alltweets[-1].id - 1
 		
-		#print "%s tweets downloaded so far..." % (len(alltweets))
+		print "%s tweets downloaded so far..." % (len(alltweets))
 	    
-	#print "Finished Collecting"
+	print "Finished Collecting"
 	
 	#transform the tweepy tweets into a 2D array that will populate the csv	
 	outtweets = [[tweet.text.encode("utf-8").replace('&amp;','&'), tweet.created_at, tweet.retweet_count, tweet.favorite_count, tweet.in_reply_to_status_id_str, tweet.in_reply_to_user_id_str, tweet.in_reply_to_screen_name] for tweet in alltweets]
@@ -91,15 +83,21 @@ def analyze(request):
 	df.columns = ['Tweet', 'Date', 'RT_count', 'Favorited_count', 'Reply_id', 'At_message_id',  'At_message_user']
 	
 	#creates new columns from the Date
+	url=str(data.url)
+	created=re.search("([0-9]{4}-[0-9]{2}\-[0-9]{2})", str(data.created_at))
+	created=created.group()
+	start_date=re.search("([0-9]{4}-[0-9]{2}\-[0-9]{2})", str(alltweets[-1].created_at))
+	start_date=start_date.group()
 	df['short_date']=pd.to_datetime(df['Date'], coerce=True).values.astype('datetime64[D]')
 	df['month']=pd.DatetimeIndex(df['Date']).month
 	df['year']=pd.DatetimeIndex(df['Date']).year
 	df['hour']=pd.DatetimeIndex(df['Date']).hour
 	RT_df=df[df['Tweet'].str.startswith("RT ")]
 	RT_count=len(df[df['Tweet'].str.startswith("RT ")])
-	status_count=str(data.statuses_count)
+	status_count=str(len(df))
 	at=df[(~df['Tweet'].str.startswith("@"))]
 	original_df=at[(~at['Tweet'].str.startswith("RT"))]
+	original_df=original_df[original_df['At_message_id']==False]
 	original_count=len(original_df)
 	original_RT_df=original_df[original_df['RT_count']>0]
 	original_RT_count=len(original_RT_df)
@@ -113,47 +111,42 @@ def analyze(request):
 	at_df=all_at_user_df[all_at_user_df['Reply_id']==False]
 	at_count=len(all_at_user_df[all_at_user_df['Reply_id']==False])
 
-	y=pd.DataFrame(df['year'].value_counts())
-	y.reset_index(level=0, inplace=True)
-	y.columns=['year','freq']
-	py=y.sort('year')
-	plt.plot(py['year'], py['freq'])
-	#plt.axis([min(py['year']), max(py['year']), 0, max(py['freq'])+10])
-	plt.axis([2008, 2014, 0, max(py['freq'])+10])
-	plt.ylabel('Frequency')
-	plt.xlabel('Year')
-	ax=plt.gca()
-	ax.get_xaxis().get_major_formatter().set_useOffset(False)
-	plt.savefig('/tmp/temp.png')
-	plt.show()
+	if 'profile_banner_url' in data._json:
+		profile_banner=str(data._json['profile_banner_url'])
+	else:
+		profile_banner = 'none'
+
+	if str(data.statuses_count)>'3181':
+		status_count=str(len(df))
+	else:
+		status_count=str(data.statuses_count)
+
 	
-	
-	html_output=  '<html><head><title>Twitter Analyzer</title></head><body style="background-image: url('+str(data.profile_banner_url)+'); background-position: right top; background-repeat: no-repeat; background-attachment: fixed; background-position: 3% 2%;  background-size: 250px 90px; ">'
+	html_output=  '<html><head><title>Twitter Analyzer</title></head><body style="background-image: url('+profile_banner+'); background-position: right top; background-repeat: no-repeat; background-attachment: fixed; background-position: 3% 2%;  background-size: 250px 90px; ">'
 	html_output+= '<center><font size="11"><img src='+str(data.profile_image_url_https)+' alt=Profile_Pic>'
 	html_output+= ' '+ str(data.name)+ "'s Twitter Overview </font>"
 	html_output+= '<br>'
 	html_output+= '<br> Followers: ' + str(data.followers_count)
 	html_output+= '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Following: ' + str(data.friends_count)
-	html_output+= '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Member of ' + str(data.listed_count) + ' lists'  + "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Total tweets: " + str(data.statuses_count)
-	html_output+= '<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tweeting since ' + str(data.created_at) + '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;URL:'
+	html_output+= '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Member of ' + str(data.listed_count) + ' lists'  + "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Location: " + str(data.location)
+	html_output+= '<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tweeting since ' + created + '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Total tweets: ' + str(data.statuses_count)
 	html_output+= '<br>'+ str(data.description)
 	html_output+= '<br><br>'
-	html_output+= '<font size="8"> Activity</font>' 
+	html_output+= '<font size="8"> Activity</font> <br> Analyzing '+str(percentage(status_count,str(data.statuses_count)))+' of tweets, startering from: '+start_date
 	html_output+= '<br>' +str(percentage(original_count,status_count)) +" (" + str(original_count) + " tweets)  of @" +str(data.screen_name)+ "'s activity are original tweets (no RT or replies)"
 	html_output+= '<br>' +str(percentage(RT_count,status_count)) +" (" + str(RT_count) + " tweets)  of @" +str(data.screen_name)+ "'s tweets were RTs"
 	html_output+= '<br>' +str(percentage(reply_count,status_count)) +" (" + str(reply_count) + " tweets)  of @" +str(data.screen_name)+ "'s tweets were replies to a user"
 	html_output+= '<br>' +str(percentage(at_count,status_count)) +" (" + str(at_count) + " tweets)  of @" +str(data.screen_name)+ "'s tweets were directed at a user"
 	html_output+= '<br><br>'
 	html_output+= '<font size="8"> In-depth</font>'
-	html_output+= '<br>Favorited ' + str(data.favourites_count) + " tweets"
-	html_output+= '<br>' + str(percentage(original_RT_count,status_count)) +" (" + str(original_RT_count)+ " tweets) of @" +screen_name+ "'s original tweets were retweeted " + str(origianl_RT_sum) + " times"
-	html_output+= '<br>' + str(percentage(favorite_count,status_count)) +" (" + str(favorite_count)+ " tweets) of @" +screen_name+ "'s original tweets were favorited " + str(favorite_sum) + " times"
+	html_output+= '<br>'+screen_name+' favorited ' + str(data.favourites_count) + " tweets"
+	html_output+= '<br>' + str(percentage(original_RT_count,original_count)) +" (" + str(original_RT_count)+ " tweets) of @" +screen_name+ "'s original tweets were retweeted " + str(origianl_RT_sum) + " times"
+	html_output+= '<br>' + str(percentage(favorite_count,original_count)) +" (" + str(favorite_count)+ " tweets) of @" +screen_name+ "'s original tweets were favorited " + str(favorite_sum) + " times"
 	html_output+= '<br><br>Top 5 direct messaged users with frequencies<br>'
-	html_output+= "<br> <img src="'"/tmp/temp.png"'">"
+	html_output+= "<br> <img src="">"
 	html_output+= '</center>'
-
-
 	html_output += '</center></body></html>'
+
 
 	return HttpResponse(html_output)
 
@@ -165,7 +158,22 @@ def percentage(part, whole):
         rnd = '%.0f' % round(ans, 1)
         return str(rnd) + "%"
 
+def date_graph(request):
 
+	response = HttpResponse(mimetype="image/png")
+	
+	ds=pd.Series(df['short_date'])
+	date_span = pd.date_range(df['short_date'].min(), df['short_date'].max())
+	pds=ds.value_counts()
+	pds.index = pd.DatetimeIndex(pds.index)
+	pds = pds.reindex(date_span, fill_value=0)
+	plt.plot(date_span.to_pydatetime(), pds, color='green')
+	plt.xticks(rotation=30)
+	plt.ylabel('Frequency')
+	plt.xlabel('Date')
+	plt.savefig(response, format="png")
+
+	return response
 
 #def db(request):
 
@@ -174,4 +182,4 @@ def percentage(part, whole):
 
  	#greetings = Greeting.objects.all()
 
-    r#eturn render(request, 'db.html', {'greetings': greetings})
+    #return render(request, 'db.html', {'greetings': greetings})
