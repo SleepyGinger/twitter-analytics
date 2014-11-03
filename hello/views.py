@@ -130,10 +130,10 @@ def analyze(request):
 	html_output+= '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Following: ' + str(data.friends_count)
 	html_output+= '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Member of ' + str(data.listed_count) + ' lists'  + "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Location: " + str(data.location)
 	html_output+= '<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tweeting since ' + created + '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Total tweets: ' + str(data.statuses_count)
-	html_output+= '<br>'+ str(data.description)
+	html_output+= '<br>'+ str(data.description.encode('utf8'))
 	html_output+= '<br><br>'
-	html_output+= '<font size="8"> Activity</font> <br> Analyzing '+str(percentage(status_count,str(data.statuses_count)))+' of tweets, startering from: '+start_date
-	html_output+= '<br>' +str(percentage(original_count,status_count)) +" (" + str(original_count) + " tweets)  of @" +str(data.screen_name)+ "'s activity are original tweets (no RT or replies)"
+	html_output+= '<font size="8"> Activity</font> <br><br> Analyzing '+str(percentage(status_count,str(data.statuses_count)))+' of tweets, startering from '+start_date
+	html_output+= '<br> <br>' +str(percentage(original_count,status_count)) +" (" + str(original_count) + " tweets)  of @" +str(data.screen_name)+ "'s activity are original tweets (no RTs or replies)"
 	html_output+= '<br>' +str(percentage(RT_count,status_count)) +" (" + str(RT_count) + " tweets)  of @" +str(data.screen_name)+ "'s tweets were RTs"
 	html_output+= '<br>' +str(percentage(reply_count,status_count)) +" (" + str(reply_count) + " tweets)  of @" +str(data.screen_name)+ "'s tweets were replies to a user"
 	html_output+= '<br>' +str(percentage(at_count,status_count)) +" (" + str(at_count) + " tweets)  of @" +str(data.screen_name)+ "'s tweets were directed at a user"
