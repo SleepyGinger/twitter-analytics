@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 
 import requests
 
+
 def index(request):
 	
 	html_output= '<html><head><title>Twitter Analyzer</title></head><body>'
@@ -18,21 +19,7 @@ def index(request):
 	html_output+= '<p>&nbsp;</p>'
 	html_output+='<center><form action="analyze/" method="request.GET">A Twitter handle please <input type="text"  size="10" name="screen_name">&nbsp;&nbsp;<input type="submit" value="Analyze"></form></center>'
 	html_output += '</body></html>'
-	return HttpResponse(html_output)
-
-#def day_graph(source):   
-#    date_by_years=pd.to_datetime(source, coerce=True).values.astype('datetime64[D]')
-#    pd.Series(date_by_years).value_counts().plot(marker='o', linestyle='-')
-#    plt.xticks(rotation=30)
-#    plt.show()
-#    return(matplotlib.pyplot.savefig('d.png'))
-#
-#def year_graph(source):   
-#    date_by_years=pd.to_datetime(source, coerce=True).values.astype('datetime64[Y]')
-#    pd.Series(date_by_years).value_counts().plot(marker='o', linestyle='-')
-#    plt.xticks(rotation=30)
-#    plt.show()
-#    return(matplotlib.pyplot.savefig('y.png'))
+	return HttpResponse(html_output)	
 
 def analyze(request):
 	screen_name = request.GET["screen_name"].replace('@','')
@@ -115,12 +102,6 @@ def analyze(request):
 		profile_banner=str(data._json['profile_banner_url'])
 	else:
 		profile_banner = 'none'
-
-	if str(data.statuses_count)>'3181':
-		status_count=str(len(df))
-	else:
-		status_count=str(data.statuses_count)
-
 	
 	html_output=  '<html><head><title>Twitter Analyzer</title></head><body style="background-image: url('+profile_banner+'); background-position: right top; background-repeat: no-repeat; background-attachment: fixed; background-position: 3% 2%;  background-size: 250px 90px; ">'
 	html_output+= '<center><font size="11"><img src='+str(data.profile_image_url_https)+' alt=Profile_Pic>'
@@ -130,7 +111,7 @@ def analyze(request):
 	html_output+= '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Following: ' + str(data.friends_count)
 	html_output+= '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Member of ' + str(data.listed_count) + ' lists'  + "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Location: " + str(data.location)
 	html_output+= '<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tweeting since ' + created + '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Total tweets: ' + str(data.statuses_count)
-	html_output+= '<br>'+ str(data.description.encode('utf8'))
+	#html_output+= '<br>'+ str(data.description.encode('utf8'))
 	html_output+= '<br><br>'
 	html_output+= '<font size="8"> Activity</font> <br><br> Analyzing '+str(percentage(status_count,str(data.statuses_count)))+' of tweets, startering from '+start_date
 	html_output+= '<br> <br>' +str(percentage(original_count,status_count)) +" (" + str(original_count) + " tweets)  of @" +str(data.screen_name)+ "'s activity are original tweets (no RTs or replies)"
@@ -143,7 +124,9 @@ def analyze(request):
 	html_output+= '<br>' + str(percentage(original_RT_count,original_count)) +" (" + str(original_RT_count)+ " tweets) of @" +screen_name+ "'s original tweets were retweeted " + str(origianl_RT_sum) + " times"
 	html_output+= '<br>' + str(percentage(favorite_count,original_count)) +" (" + str(favorite_count)+ " tweets) of @" +screen_name+ "'s original tweets were favorited " + str(favorite_sum) + " times"
 	html_output+= '<br><br>Top 5 direct messaged users with frequencies<br>'
-	html_output+= "<br> <img src="">"
+	html_output+= "<br> <img src=/date_graph/?screen_name="+screen_name+"><br><br><br>"
+	html_output+= "<br> <img src=/hour_graph/?screen_name="+screen_name+"><br><br><br>"
+	html_output+= "<br> <img src=/week_day/?screen_name="+screen_name+"><br><br><br>"
 	html_output+= '</center>'
 	html_output += '</center></body></html>'
 
@@ -160,6 +143,56 @@ def percentage(part, whole):
 
 def date_graph(request):
 
+	screen_name = request.GET["screen_name"].replace('@','')
+
+	#Twitter only allows access to a users most recent 3240 tweets with this method	
+	#authorize twitter, initialize tweepy
+	auth = tweepy.OAuthHandler('aOtAWCqvw99r9mDkP5TtpQ','1Qs97JNZpzx0XoInBH1ikmFHseZo511Ts4PxrwJss')
+	auth.set_access_token('588385097-TZXoE2FP55l2ZLdxbrN8iC784YoNBelrgLaJRTJE','wvj8OCfEzt27IEVo36nBEMWL37K8HBl8s5zDz9yjnVc')
+	api = tweepy.API(auth)
+	
+	data = api.get_user(screen_name)
+
+	
+	#initialize a list to hold all the tweepy Tweets
+	alltweets = []	
+	
+	#make initial request for most recent tweets (200 is the maximum allowed count)
+	new_tweets = api.user_timeline(screen_name = screen_name ,count=200)
+	
+	#save most recent tweets
+	alltweets.extend(new_tweets)
+	
+	#save the id of the oldest tweet less one
+	oldest = alltweets[-1].id - 1
+	
+	#keep grabbing tweets until there are no tweets left to grab
+	while len(new_tweets) > 0:
+		print "Getting tweets before tweet id: %s" % (oldest)
+		
+		#all subsiquent requests use the max_id param to prevent duplicates
+		new_tweets = api.user_timeline(screen_name = screen_name ,count=200,max_id=oldest)
+		
+		#save most recent tweets
+		alltweets.extend(new_tweets)
+		
+		#update the id of the oldest tweet less one
+		oldest = alltweets[-1].id - 1
+		
+		print "%s tweets downloaded so far..." % (len(alltweets))
+	    
+	print "Finished Collecting"
+	
+	#transform the tweepy tweets into a 2D array that will populate the csv	
+	outtweets = [[tweet.text.encode("utf-8").replace('&amp;','&'), tweet.created_at, tweet.retweet_count, tweet.favorite_count, tweet.in_reply_to_status_id_str, tweet.in_reply_to_user_id_str, tweet.in_reply_to_screen_name] for tweet in alltweets]
+	
+	#creates DataFrame with selected fields
+	df=pd.DataFrame(outtweets).fillna(False)
+	df.columns = ['Tweet', 'Date', 'RT_count', 'Favorited_count', 'Reply_id', 'At_message_id',  'At_message_user']
+	
+	#creates new columns from the Date
+	df['short_date']=pd.to_datetime(df['Date'], coerce=True).values.astype('datetime64[D]')
+	
 	response = HttpResponse(mimetype="image/png")
 	
 	ds=pd.Series(df['short_date'])
@@ -172,6 +205,141 @@ def date_graph(request):
 	plt.ylabel('Frequency')
 	plt.xlabel('Date')
 	plt.savefig(response, format="png")
+	plt.close()
+
+	return response
+
+def hour_graph(request):
+
+	screen_name = request.GET["screen_name"].replace('@','')
+
+	#Twitter only allows access to a users most recent 3240 tweets with this method	
+	#authorize twitter, initialize tweepy
+	auth = tweepy.OAuthHandler('aOtAWCqvw99r9mDkP5TtpQ','1Qs97JNZpzx0XoInBH1ikmFHseZo511Ts4PxrwJss')
+	auth.set_access_token('588385097-TZXoE2FP55l2ZLdxbrN8iC784YoNBelrgLaJRTJE','wvj8OCfEzt27IEVo36nBEMWL37K8HBl8s5zDz9yjnVc')
+	api = tweepy.API(auth)
+	
+	data = api.get_user(screen_name)
+
+	
+	#initialize a list to hold all the tweepy Tweets
+	alltweets = []	
+	
+	#make initial request for most recent tweets (200 is the maximum allowed count)
+	new_tweets = api.user_timeline(screen_name = screen_name ,count=200)
+	
+	#save most recent tweets
+	alltweets.extend(new_tweets)
+	
+	#save the id of the oldest tweet less one
+	oldest = alltweets[-1].id - 1
+	
+	#keep grabbing tweets until there are no tweets left to grab
+	while len(new_tweets) > 0:
+		print "Getting tweets before tweet id: %s" % (oldest)
+		
+		#all subsiquent requests use the max_id param to prevent duplicates
+		new_tweets = api.user_timeline(screen_name = screen_name ,count=200,max_id=oldest)
+		
+		#save most recent tweets
+		alltweets.extend(new_tweets)
+		
+		#update the id of the oldest tweet less one
+		oldest = alltweets[-1].id - 1
+		
+		print "%s tweets downloaded so far..." % (len(alltweets))
+	    
+	print "Finished Collecting"
+	
+	#transform the tweepy tweets into a 2D array that will populate the csv	
+	outtweets = [[tweet.text.encode("utf-8").replace('&amp;','&'), tweet.created_at, tweet.retweet_count, tweet.favorite_count, tweet.in_reply_to_status_id_str, tweet.in_reply_to_user_id_str, tweet.in_reply_to_screen_name] for tweet in alltweets]
+	
+	#creates DataFrame with selected fields
+	df=pd.DataFrame(outtweets).fillna(False)
+	df.columns = ['Tweet', 'Date', 'RT_count', 'Favorited_count', 'Reply_id', 'At_message_id',  'At_message_user']
+	
+	#creates new columns from the Date
+	df['hour']=pd.DatetimeIndex(df['Date']).hour
+	
+	response = HttpResponse(mimetype="image/png")
+	
+	days_hours=range(23)
+	h = pd.Series(df['hour'])
+	ph = h.value_counts()
+	ph = ph.reindex(days_hours, fill_value=0)
+	plt.plot(ph)
+	plt.axis([0, 23, 0, max(ph)+5])
+	plt.ylabel('Number of Tweets')
+	plt.xlabel('Hour of the day')
+	plt.savefig(response, format="png")
+	plt.close()
+
+	return response
+
+def week_day(request):
+
+	screen_name = request.GET["screen_name"].replace('@','')
+
+	#Twitter only allows access to a users most recent 3240 tweets with this method	
+	#authorize twitter, initialize tweepy
+	auth = tweepy.OAuthHandler('aOtAWCqvw99r9mDkP5TtpQ','1Qs97JNZpzx0XoInBH1ikmFHseZo511Ts4PxrwJss')
+	auth.set_access_token('588385097-TZXoE2FP55l2ZLdxbrN8iC784YoNBelrgLaJRTJE','wvj8OCfEzt27IEVo36nBEMWL37K8HBl8s5zDz9yjnVc')
+	api = tweepy.API(auth)
+	
+	data = api.get_user(screen_name)
+
+	
+	#initialize a list to hold all the tweepy Tweets
+	alltweets = []	
+	
+	#make initial request for most recent tweets (200 is the maximum allowed count)
+	new_tweets = api.user_timeline(screen_name = screen_name ,count=200)
+	
+	#save most recent tweets
+	alltweets.extend(new_tweets)
+	
+	#save the id of the oldest tweet less one
+	oldest = alltweets[-1].id - 1
+	
+	#keep grabbing tweets until there are no tweets left to grab
+	while len(new_tweets) > 0:
+		print "Getting tweets before tweet id: %s" % (oldest)
+		
+		#all subsiquent requests use the max_id param to prevent duplicates
+		new_tweets = api.user_timeline(screen_name = screen_name ,count=200,max_id=oldest)
+		
+		#save most recent tweets
+		alltweets.extend(new_tweets)
+		
+		#update the id of the oldest tweet less one
+		oldest = alltweets[-1].id - 1
+		
+		print "%s tweets downloaded so far..." % (len(alltweets))
+	    
+	print "Finished Collecting"
+	
+	#transform the tweepy tweets into a 2D array that will populate the csv	
+	outtweets = [[tweet.text.encode("utf-8").replace('&amp;','&'), tweet.created_at, tweet.retweet_count, tweet.favorite_count, tweet.in_reply_to_status_id_str, tweet.in_reply_to_user_id_str, tweet.in_reply_to_screen_name] for tweet in alltweets]
+	
+	#creates DataFrame with selected fields
+	df=pd.DataFrame(outtweets).fillna(False)
+	df.columns = ['Tweet', 'Date', 'RT_count', 'Favorited_count', 'Reply_id', 'At_message_id',  'At_message_user']
+	
+	#creates new columns from the Date
+	df['short_date']=pd.to_datetime(df['Date'], coerce=True).values.astype('datetime64[D]')
+	
+	response = HttpResponse(mimetype="image/png")
+	
+	df['weekday'] = df['short_date'].apply(lambda x: x.weekday())
+	weekday=range(7)
+	w = pd.Series(df['weekday'])
+	wk = w.value_counts()
+	wk = wk.reindex(weekday, fill_value=0)
+	wk.index=['Mon', 'Tues', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun']
+	wk.plot(color='red')
+	plt.grid(False)
+	plt.savefig(response, format="png")
+	plt.close()
 
 	return response
 

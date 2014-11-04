@@ -1,2 +1,2 @@
-web: gunicorn gettingstarted.wsgi --log-file - --timeout 150
+web: gunicorn gettingstarted.wsgi --log-file - --timeout 200
 
