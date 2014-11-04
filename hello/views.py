@@ -102,6 +102,19 @@ def analyze(request):
 		profile_banner=str(data._json['profile_banner_url'])
 	else:
 		profile_banner = 'none'
+
+	f_df=favorite_df[['Tweet','Favorited_count','short_date']][:10]
+	at_df=all_at_user_df[['Tweet','At_message_user','short_date']][:10]
+	att=str(at_df.values)
+	att=att.replace("Timestamp('",'')
+	att=att.replace("[ '",'')
+	att=att.replace(" 00:00:00', tz=None)]",'')
+	att=att.replace("'\n  '",'<br>')
+
+	show_at_df=at_df['At_message_user'].value_counts()[:5]
+	show_at_df=str(show_at_df)
+	show_at_df=show_at_df.replace('\n','<br>')
+	show_at_df=show_at_df.replace('dtype: int64','')
 	
 	html_output=  '<html><head><title>Twitter Analyzer</title></head><body style="background-image: url('+profile_banner+'); background-position: right top; background-repeat: no-repeat; background-attachment: fixed; background-position: 3% 2%;  background-size: 250px 90px; ">'
 	html_output+= '<center><font size="11"><img src='+str(data.profile_image_url_https)+' alt=Profile_Pic>'
@@ -123,11 +136,12 @@ def analyze(request):
 	html_output+= '<br>'+screen_name+' favorited ' + str(data.favourites_count) + " tweets"
 	html_output+= '<br>' + str(percentage(original_RT_count,original_count)) +" (" + str(original_RT_count)+ " tweets) of @" +screen_name+ "'s original tweets were retweeted " + str(origianl_RT_sum) + " times"
 	html_output+= '<br>' + str(percentage(favorite_count,original_count)) +" (" + str(favorite_count)+ " tweets) of @" +screen_name+ "'s original tweets were favorited " + str(favorite_sum) + " times"
-	html_output+= '<br><br>Top 5 direct messaged users with frequencies<br>'
+	html_output+= '<br><br>Top 5 user interactions with frequencies<br>'
+	html_output+=  ' '+show_at_df+'<br><br><br>'
 	html_output+= "<br> <img src=/date_graph/?screen_name="+screen_name+"><br><br><br>"
 	html_output+= "<br> <img src=/hour_graph/?screen_name="+screen_name+"><br><br><br>"
 	html_output+= "<br> <img src=/week_day/?screen_name="+screen_name+"><br><br><br>"
-	html_output+= '</center>'
+
 	html_output += '</center></body></html>'
 
 
@@ -338,6 +352,8 @@ def week_day(request):
 	wk.index=['Mon', 'Tues', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun']
 	wk.plot(color='red')
 	plt.grid(False)
+	plt.ylabel('Number of Tweets')
+	plt.xlabel('Day of the week')
 	plt.savefig(response, format="png")
 	plt.close()
 
