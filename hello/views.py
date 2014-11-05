@@ -16,10 +16,11 @@ def index(request):
 	html_output=  '<html><head><title>Twitter Analyzer</title>'
 	html_output+= "<script>"
 	html_output+= "(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){"
-	html_output+= "i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),"
+	html_output+= "(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),"
 	html_output+= "m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)"
-	html_output+= "window,document,'script','//www.google-analytics.com/analytics.js','ga');"
-	html_output+= "ga('create', 'UA-56466801-1', 'auto');ga('send', 'pageview');</script></head>"
+	html_output+= "})(window,document,'script','//www.google-analytics.com/analytics.js','ga');"
+	html_output+= "ga('create', 'UA-56466801-1', 'auto');"
+	html_output+= "ga('send', 'pageview');</script></head>"
 	html_output+= '<body><p>&nbsp;</p>'
 	html_output+= '<p>&nbsp;</p>'
 	html_output+= '<p>&nbsp;</p>'
@@ -125,10 +126,12 @@ def analyze(request):
 	html_output=  '<html><head><title>Twitter Analyzer</title>'
 	html_output+= "<script>"
 	html_output+= "(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){"
-	html_output+= "i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),"
+	html_output+= "(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),"
 	html_output+= "m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)"
-	html_output+= "window,document,'script','//www.google-analytics.com/analytics.js','ga');"
-	html_output+= "ga('create', 'UA-56466801-1', 'auto');ga('send', 'pageview');</script></head>"
+	html_output+= "})(window,document,'script','//www.google-analytics.com/analytics.js','ga');"
+	html_output+= "ga('create', 'UA-56466801-1', 'auto');"
+	html_output+= "ga('send', 'pageview');"
+	html_output+= "</script></head>"
 	html_output+= '<body style="background-image: url('+profile_banner+'); background-position: right top; background-repeat: no-repeat; background-attachment: fixed; background-position: 3% 2%;  background-size: 250px 90px; ">'
 	html_output+= '<center><font size="11"><img src='+str(data.profile_image_url_https)+' alt=Profile_Pic>'
 	html_output+= ' '+ str(data.name)+ "'s Twitter Overview </font>"
