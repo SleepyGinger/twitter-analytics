@@ -140,7 +140,7 @@ def analyze(request):
 	html_output+= '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Following: ' + str(data.friends_count)
 	html_output+= '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Member of ' + str(data.listed_count) + ' lists'  + "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Location: " + str(data.location.encode('ascii', 'ignore'))
 	html_output+= '<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tweeting since ' + created + '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Total tweets: ' + str(data.statuses_count)
-	html_output+= '<br>description:'+ str(data.description.encode('ascii', 'ignore'))
+	html_output+= '<br>Description:'+ str(data.description.encode('ascii', 'ignore'))
 	html_output+= '<br><br>'
 	html_output+= '<font size="8"> Activity</font> <br><br> Analyzing '+str(percentage(status_count,str(data.statuses_count)))+' of tweets, startering from '+start_date
 	html_output+= '<br> <br>' +str(percentage(original_count,status_count)) +" (" + str(original_count) + " tweets)  of @" +str(data.screen_name)+ "'s activity are original tweets (no RTs or replies)"
@@ -221,7 +221,8 @@ def date_graph(request):
 	df.columns = ['Tweet', 'Date', 'RT_count', 'Favorited_count', 'Reply_id', 'At_message_id',  'At_message_user']
 	
 	#creates new columns from the Date
-	df['short_date']=pd.to_datetime(df['Date'], coerce=True).values.astype('datetime64[D]')
+	time_zoned=pd.DatetimeIndex(pd.to_datetime(df['Date'],unit='ms')).tz_localize('UTC').tz_convert('US/Eastern')
+	df['short_date']=pd.to_datetime(time_zoned.map(lambda x: x.strftime('%Y-%m-%d')), coerce=True)
 	
 	response = HttpResponse(mimetype="image/png")
 	
@@ -358,7 +359,8 @@ def week_day(request):
 	df.columns = ['Tweet', 'Date', 'RT_count', 'Favorited_count', 'Reply_id', 'At_message_id',  'At_message_user']
 	
 	#creates new columns from the Date
-	df['short_date']=pd.to_datetime(df['Date'], coerce=True).values.astype('datetime64[D]')
+	time_zoned=pd.DatetimeIndex(pd.to_datetime(df['Date'],unit='ms')).tz_localize('UTC').tz_convert('US/Eastern')
+	df['short_date']=pd.to_datetime(time_zoned.map(lambda x: x.strftime('%Y-%m-%d')), coerce=True)
 	
 	response = HttpResponse(mimetype="image/png")
 	
