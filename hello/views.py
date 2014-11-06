@@ -24,7 +24,8 @@ def index(request):
 	html_output+= '<body><p>&nbsp;</p>'
 	html_output+= '<p>&nbsp;</p>'
 	html_output+= '<p>&nbsp;</p>'
-	html_output+='<center><form action="analyze/" method="request.GET">A Twitter handle please <input type="text"  size="10" name="screen_name">&nbsp;&nbsp;<input type="submit" value="Analyze"></form></center>'
+	html_output+='<center><form action="analyze/" method="request.GET">A Twitter Username Please <br><br><input type="text"  size="35" name="screen_name">&nbsp;&nbsp;<br><br>'
+	html_output+= '<input type="submit" value="GO!" style="width: 120px; height: 120px;" /></form></center>'
 	html_output += '</body></html>'
 	return HttpResponse(html_output)	
 
@@ -181,9 +182,9 @@ def analyze(request):
 	html_output+=  ' '+source_df+'<br>'
 	html_output+= '<br><br><u>Top RTs with frequencies</u><br>'
 	html_output+=  ' '+html_original_RT_df+'<br><br><br>'
-	#html_output+= "<br> <img src=/date_graph/?screen_name="+screen_name+"><br><br><br>"
-	#html_output+= "<br> <img src=/hour_graph/?screen_name="+screen_name+"><br><br><br>"
-	#html_output+= "<br> <img src=/week_day/?screen_name="+screen_name+"><br><br><br>"
+	html_output+= "<br> <img src=/date_graph/?screen_name="+screen_name+"><br><br><br>"
+	html_output+= "<br> <img src=/hour_graph/?screen_name="+screen_name+"><br><br><br>"
+	html_output+= "<br> <img src=/week_day/?screen_name="+screen_name+"><br><br><br>"
 
 	html_output += '</center></body></html>'
 
