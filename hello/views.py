@@ -289,7 +289,9 @@ def hour_graph(request):
 	df.columns = ['Tweet', 'Date', 'RT_count', 'Favorited_count', 'Reply_id', 'At_message_id',  'At_message_user']
 	
 	#creates new columns from the Date
-	df['hour']=pd.DatetimeIndex(df['Date']).hour
+	ass=pd.DatetimeIndex(pd.to_datetime(df['Date'],unit='ms')).tz_localize('UTC').tz_convert('US/Eastern')
+	asss=ass.tolist()
+	df['hour']=ass.hour
 	
 	response = HttpResponse(mimetype="image/png")
 	
