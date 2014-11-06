@@ -133,14 +133,14 @@ def analyze(request):
 	html_output+= "ga('send', 'pageview');"
 	html_output+= "</script></head>"
 	html_output+= '<body style="background-image: url('+profile_banner+'); background-position: right top; background-repeat: no-repeat; background-attachment: fixed; background-position: 3% 2%;  background-size: 250px 90px; ">'
-	html_output+= '<center><font size="11"><img src='+str(data.profile_image_url_https)+' alt=Profile_Pic>'
-	html_output+= ' '+ str(data.name)+ "'s Twitter Overview </font>"
+	html_output+= '<img src='+str(data.profile_image_url_https)+' alt=Profile_Pic background-position: 3% 2%; background-repeat: no-repeat; background-attachment: fixed;>'
+	html_output+= '<center><font size="11">'+ str(data.name)+ "'s Twitter Overview </font>"
 	html_output+= '<br>'
 	html_output+= '<br> Followers: ' + str(data.followers_count)
 	html_output+= '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Following: ' + str(data.friends_count)
-	html_output+= '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Member of ' + str(data.listed_count) + ' lists'  + "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Location: " + str(data.location)
+	html_output+= '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Member of ' + str(data.listed_count) + ' lists'  + "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Location: " + str(data.location.encode('ascii', 'ignore'))
 	html_output+= '<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tweeting since ' + created + '&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Total tweets: ' + str(data.statuses_count)
-	#html_output+= '<br>'+ str(data.description.encode('utf8'))
+	html_output+= '<br>description:'+ str(data.description.encode('ascii', 'ignore'))
 	html_output+= '<br><br>'
 	html_output+= '<font size="8"> Activity</font> <br><br> Analyzing '+str(percentage(status_count,str(data.statuses_count)))+' of tweets, startering from '+start_date
 	html_output+= '<br> <br>' +str(percentage(original_count,status_count)) +" (" + str(original_count) + " tweets)  of @" +str(data.screen_name)+ "'s activity are original tweets (no RTs or replies)"
