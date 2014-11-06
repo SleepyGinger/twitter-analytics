@@ -70,11 +70,11 @@ def analyze(request):
 	print "Finished Collecting"
 	
 	#transform the tweepy tweets into a 2D array that will populate the csv	
-	outtweets = [[tweet.text.encode("utf-8").replace('&amp;','&'), tweet.created_at, tweet.retweet_count, tweet.favorite_count, tweet.in_reply_to_status_id_str, tweet.in_reply_to_user_id_str, tweet.in_reply_to_screen_name] for tweet in alltweets]
+	outtweets = [[tweet.text.encode('ascii', 'ignore'), tweet.created_at, tweet.retweet_count, tweet.favorite_count, tweet.in_reply_to_status_id_str, tweet.in_reply_to_user_id_str, tweet.in_reply_to_screen_name, tweet.source.encode('ascii', 'ignore')] for tweet in alltweets]
 	
 	#creates DataFrame with selected fields
 	df=pd.DataFrame(outtweets).fillna(False)
-	df.columns = ['Tweet', 'Date', 'RT_count', 'Favorited_count', 'Reply_id', 'At_message_id',  'At_message_user']
+	df.columns = ['Tweet', 'Date', 'RT_count', 'Favorited_count', 'Reply_id', 'At_message_id',  'At_message_user', 'Source']
 	
 	#creates new columns from the Date
 	url=str(data.url)
@@ -105,6 +105,8 @@ def analyze(request):
 	at_df=all_at_user_df[all_at_user_df['Reply_id']==False]
 	at_count=len(all_at_user_df[all_at_user_df['Reply_id']==False])
 
+	pd.set_option('max_colwidth',140)
+
 	if 'profile_banner_url' in data._json:
 		profile_banner=str(data._json['profile_banner_url'])
 	else:
@@ -122,6 +124,27 @@ def analyze(request):
 	show_at_df=str(show_at_df)
 	show_at_df=show_at_df.replace('\n','<br>')
 	show_at_df=show_at_df.replace('dtype: int64','')
+
+	source_df=df['Source'].value_counts()[:5]
+	source_df=str(source_df)
+	source_df=source_df.replace('\n','<br>')
+	source_df=source_df.replace('dtype: int64','')
+
+	html_original_RT_df=original_RT_df.sort(columns='RT_count', ascending=False)[['Tweet','RT_count','short_date']][:10].reset_index(drop=True)
+	html_original_RT_df=str(html_original_RT_df)
+	html_original_RT_df=html_original_RT_df.replace('\n0','<br>')
+	html_original_RT_df=html_original_RT_df.replace('\n1','<br>')
+	html_original_RT_df=html_original_RT_df.replace('\n2','<br>')
+	html_original_RT_df=html_original_RT_df.replace('\n3','<br>')
+	html_original_RT_df=html_original_RT_df.replace('\n4','<br>')
+	html_original_RT_df=html_original_RT_df.replace('\n5','<br>')
+	html_original_RT_df=html_original_RT_df.replace('\n6','<br>')
+	html_original_RT_df=html_original_RT_df.replace('\n7','<br>')
+	html_original_RT_df=html_original_RT_df.replace('\n8','<br>')
+	html_original_RT_df=html_original_RT_df.replace('\n9','<br>')
+	html_original_RT_df=html_original_RT_df.replace('RT_count','<br><br>RT_count&nbsp;|&nbsp;')
+	html_original_RT_df=html_original_RT_df.replace('short_date','Date')
+
 	
 	html_output=  '<html><head><title>Twitter Analyzer</title>'
 	html_output+= "<script>"
@@ -132,8 +155,8 @@ def analyze(request):
 	html_output+= "ga('create', 'UA-56466801-1', 'auto');"
 	html_output+= "ga('send', 'pageview');"
 	html_output+= "</script></head>"
-	html_output+= '<body style="background-image: url('+profile_banner+'); background-position: right top; background-repeat: no-repeat; background-attachment: fixed; background-position: 3% 2%;  background-size: 250px 90px; ">'
-	html_output+= '<img src='+str(data.profile_image_url_https)+' alt=Profile_Pic background-position: 3% 2%; background-repeat: no-repeat; background-attachment: fixed;>'
+	html_output+= '<body style="background-image: url('+profile_banner+'); background-repeat: repeat-x, repeat; background-position: right top; background-repeat: no-repeat; background-attachment: fixed; background-position: 3% 2%;  background-size: 250px 90px; ">'
+	html_output+= '<img src='+str(data.profile_image_url_https)+' alt=Profile_Pic background-position: 3% 2%; position: fixed;>'
 	html_output+= '<center><font size="11">'+ str(data.name)+ "'s Twitter Overview </font>"
 	html_output+= '<br>'
 	html_output+= '<br> Followers: ' + str(data.followers_count)
@@ -152,11 +175,15 @@ def analyze(request):
 	html_output+= '<br>'+screen_name+' favorited ' + str(data.favourites_count) + " tweets"
 	html_output+= '<br>' + str(percentage(original_RT_count,original_count)) +" (" + str(original_RT_count)+ " tweets) of @" +screen_name+ "'s original tweets were retweeted " + str(origianl_RT_sum) + " times"
 	html_output+= '<br>' + str(percentage(favorite_count,original_count)) +" (" + str(favorite_count)+ " tweets) of @" +screen_name+ "'s original tweets were favorited " + str(favorite_sum) + " times"
-	html_output+= '<br><br>Top 5 user interactions with frequencies<br>'
-	html_output+=  ' '+show_at_df+'<br><br><br>'
-	html_output+= "<br> <img src=/date_graph/?screen_name="+screen_name+"><br><br><br>"
-	html_output+= "<br> <img src=/hour_graph/?screen_name="+screen_name+"><br><br><br>"
-	html_output+= "<br> <img src=/week_day/?screen_name="+screen_name+"><br><br><br>"
+	html_output+= '<br><br><u>Top interactions with frequencies</u><br>'
+	html_output+=  ' '+show_at_df+'<br>'
+	html_output+= '<br><br><u>Posting ways with frequencies</u><br>'
+	html_output+=  ' '+source_df+'<br>'
+	html_output+= '<br><br><u>Top RTs with frequencies</u><br>'
+	html_output+=  ' '+html_original_RT_df+'<br><br><br>'
+	#html_output+= "<br> <img src=/date_graph/?screen_name="+screen_name+"><br><br><br>"
+	#html_output+= "<br> <img src=/hour_graph/?screen_name="+screen_name+"><br><br><br>"
+	#html_output+= "<br> <img src=/week_day/?screen_name="+screen_name+"><br><br><br>"
 
 	html_output += '</center></body></html>'
 
@@ -223,7 +250,7 @@ def date_graph(request):
 	#creates new columns from the Date
 	time_zoned=pd.DatetimeIndex(pd.to_datetime(df['Date'],unit='ms')).tz_localize('UTC').tz_convert('US/Eastern')
 	df['short_date']=pd.to_datetime(time_zoned.map(lambda x: x.strftime('%Y-%m-%d')), coerce=True)
-	
+
 	response = HttpResponse(mimetype="image/png")
 	
 	ds=pd.Series(df['short_date'])
