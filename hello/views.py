@@ -205,8 +205,8 @@ def date_graph(request):
 
 	#Twitter only allows access to a users most recent 3240 tweets with this method	
 	#authorize twitter, initialize tweepy
-	auth = tweepy.OAuthHandler('aOtAWCqvw99r9mDkP5TtpQ','1Qs97JNZpzx0XoInBH1ikmFHseZo511Ts4PxrwJss')
-	auth.set_access_token('588385097-TZXoE2FP55l2ZLdxbrN8iC784YoNBelrgLaJRTJE','wvj8OCfEzt27IEVo36nBEMWL37K8HBl8s5zDz9yjnVc')
+	auth = tweepy.OAuthHandler('**','**')
+	auth.set_access_token('**','**')
 	api = tweepy.API(auth)
 	
 	data = api.get_user(screen_name)
